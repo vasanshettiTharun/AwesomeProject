@@ -1,0 +1,1 @@
+ALTER TABLE `GlobalLanguage` DROP COLUMN `NativeName`;

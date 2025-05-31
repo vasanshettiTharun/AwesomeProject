@@ -1,131 +1,121 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import {StyleSheet, Text, View, FlatList} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {openDatabase} from './db';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const App = () => {
+  const [GlobalLanguageData, setGlobalLanguageData] = useState([]);
+  const [AayatData, setAayatData] = useState([]);
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
+  useEffect(() => {
+    const fetchData = async () => {
+      const db = await openDatabase();
+      if (!db) {
+        console.log('Database not opened');
+        return;
+      }
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT * FROM GlobalLanguage',
+          [],
+          (_txObj, resultSet) => {
+            const rows = resultSet.rows;
+            const data: Array<any> = [];
+            for (let i = 0; i < rows.length; i++) {
+              data.push(rows.item(i));
+            }
+            console.log('GlobalLanguage data fetched:', data);
+            setGlobalLanguageData(data);
           },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
+          (_txObj, error) => {
+            console.log('Error fetching GlobalLanguage:', error);
+            return false;
           },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+        );
+      });
+    };
+    fetchData();
+  }, []);
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the recommendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+  useEffect(() => {
+    const fetchAayatData = async () => {
+      const db = await openDatabase();
+      if (!db) {
+        console.log('Database not opened');
+        return;
+      }
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT * FROM LastSync',
+          [],
+          (_txObj, resultSet) => {
+            const rows = resultSet.rows;
+            const data = [];
+            for (let i = 0; i < rows.length; i++) {
+              data.push(rows.item(i));
+            }
+            console.log('Aayat data fetched:', data);
+            setAayatData(data);
+          },
+          (_txObj, error) => {
+            console.log('Error fetching Aayat:', error);
+            return false;
+          },
+        );
+      });
+    };
+    fetchAayatData();
+  }, []);
+  
+  useEffect(() => {
+    const checkTableExists = async () => {
+      const db = await openDatabase();
+      if (!db) {
+        console.log('Database not opened');
+        return;
+      }
+      db.transaction(tx => {
+        tx.executeSql(
+          'SELECT name FROM sqlite_master WHERE type="table" AND name="page_fts"',
+          [],
+          (_txObj, resultSet) => {
+            if (resultSet.rows.length > 0) {
+              console.log('page_fts table exists');
+              // Table exists, you can perform further actions here
+            } else {
+              console.log('page_fts table does not exist');
+              // Table doesn't exist
+            }
+          },
+          (_txObj, error) => {
+            console.log('Error checking for table:', error);
+            return false;
+          },
+        );
+      });
+    };
+    checkTableExists();
+  }, []);
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <View style={styles.container}>
+      <Text style={styles.header}>GlobalLanguage Table Contents</Text>
+      <FlatList
+        data={GlobalLanguageData}
+        keyExtractor={item => item.id?.toString() || Math.random().toString()}
+        renderItem={({item}) => (
+          <View style={styles.item}>
+            <Text>{JSON.stringify(item)}</Text>
+          </View>
+        )}
       />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
     </View>
   );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
+};
 
 export default App;
+
+const styles = StyleSheet.create({
+  container: {flex: 1, padding: 16, backgroundColor: '#fff'},
+  header: {fontSize: 20, fontWeight: 'bold', marginBottom: 12},
+  item: {padding: 8, borderBottomWidth: 1, borderColor: '#eee'},
+});

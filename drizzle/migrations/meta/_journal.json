@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1748675815205,
+      "tag": "0000_free_jazinda",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1748675830791,
+      "tag": "0001_foamy_sinister_six",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1748683764704,
+      "tag": "0002_far_fabian_cortez",
+      "breakpoints": true
+    }
+  ]
+}
